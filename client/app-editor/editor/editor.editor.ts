@@ -1508,6 +1508,7 @@ export const Editor = createFactory<any, EditorState>({
     const editorsPageType: PageType | undefined = editorsPage?.pageRole;
 
     const me: Myself = store.me;
+    const myUiPrefs: UiPrefs = me_uiPrefs(me);
     let settings: SettingsVisibleClientSide = store.settings;
     const isPrivateGroup = page_isPrivateGroup(state.newPageRole);
 
@@ -1869,37 +1870,52 @@ export const Editor = createFactory<any, EditorState>({
 
     // ----- Preview
 
-    const previewHelp =
-        r.div({ className: 'dw-preview-help' },
-          help.HelpMessageBox({ message: previewHelpMessage }));
-
-    const thereIsAnInPagePreview =
+    const isInPagePrevw =
         me_uiPrefs(me).inp !== UiPrefsIninePreviews.Skip &&
         // If we're creating a new page, there's not any place to show an in-page preview.
         !state.newForumTopicCategoryId;
 
-    const previewTitleTagName = !thereIsAnInPagePreview ? 'span' : 'a';
-    const onPreviewTitleClick = !thereIsAnInPagePreview ? null : () => {
-      ReactActions.scrollToPreview({
-        isEditingBody: state.editingPostNr === BodyNr,
-        isChat: page_isChat(editorsPageType),
-      });
+    // Don't show any in-editor preview, if we're showing an in-page preview,
+    // and hasn't configured double previews (in editor too).
+    const skipInEditorPreview =
+        isInPagePrevw &&
+        myUiPrefs.inp !== UiPrefsIninePreviews.Double &&
+        // If the editor is full screen, then show an in-editor previwe as usual.
+        !(state.showMaximized || state.splitHorizontally || state.showOnlyPreview);
+
+    const previewHelp = skipInEditorPreview ? null :
+        r.div({ className: 'dw-preview-help' },
+          help.HelpMessageBox({ message: previewHelpMessage }));
+
+    const previewTitleTagName = !isInPagePrevw ? 'span' : 'a';
+
+    const previewProps = !isInPagePrevw ? {} : {
+      onMouseEnter: () => ReactActions.highlightPreview(true),
+      onMouseLeave: () => ReactActions.highlightPreview(false),
+      onClick: () => {
+        ReactActions.scrollToPreview({
+          isEditingBody: state.editingPostNr === BodyNr,
+          isChat: page_isChat(editorsPageType),
+        });
+      },
     };
 
-    const previewTitle =
+    const previewTitle = skipInEditorPreview ? null :
         r.div({},
-          r[previewTitleTagName]({
-              onMouseEnter: !thereIsAnInPagePreview ? null :
-                  () => ReactActions.highlightPreview(true),
-              onMouseLeave: !thereIsAnInPagePreview ? null :
-                  () => ReactActions.highlightPreview(false),
-              onClick: onPreviewTitleClick },
+          r[previewTitleTagName](previewProps,
             t.e.PreviewC + (titleInput ? t.e.TitleExcl : '')));
+
+    // If no in-editor preview, instead well include a "Scroll to preview" button
+    // above the textarea.
+    const scrollToPreviewBtn = !skipInEditorPreview || !isInPagePrevw ? null :
+        r.a({ ...previewProps, className: 's_E_ScrPrvwB' }, t.ShowPreview);
+
+    let editorClasses = skipInEditorPreview ? 's_E-NoPrvw' : 's_E-WithPrvw';
 
 
     // ----- Editor size
 
-    let editorClasses = eds.isInEmbeddedEditor ? '' : 'editor-box-shadow';
+    editorClasses += eds.isInEmbeddedEditor ? '' : ' editor-box-shadow';
     editorClasses += state.showMaximized ? ' s_E-Max' : '';
     editorClasses += state.splitHorizontally ? ' s_E-SplitHz' : '';
     editorClasses += state.showMinimized ? ' s_E-Min' : (
@@ -1940,6 +1956,7 @@ export const Editor = createFactory<any, EditorState>({
                 r.div({ className: 's_E_DoingRow' },
                   r.span({ className: 's_E_DoingWhat' }, doingWhatInfo),
                   showGuidelinesBtn,
+                  scrollToPreviewBtn,
                   draftStatusText),
                 r.div({ className: 'esEdtr_titleEtc' },
                   // COULD use https://github.com/marcj/css-element-queries here so that
@@ -1951,11 +1968,12 @@ export const Editor = createFactory<any, EditorState>({
                     pageRoleDropdown)),
                 textareaButtons,
                 textarea)),
-            r.div({ className: 'preview-area', style: previewStyles },
-              previewTitle,
-              previewHelp,
-              r.div({ className: 'preview', id: 't_E_Preview', ref: 'preview',
-                  dangerouslySetInnerHTML: { __html: state.safePreviewHtml }})),
+             skipInEditorPreview ? null :
+               r.div({ className: 'preview-area', style: previewStyles },
+                previewTitle,
+                previewHelp,
+                r.div({ className: 'preview', id: 't_E_Preview', ref: 'preview',
+                    dangerouslySetInnerHTML: { __html: state.safePreviewHtml }})),
             r.div({ className: 'submit-cancel-btns' },
               PrimaryButton({ onClick: this.onSaveClick, tabIndex: 1, className: 'e_E_SaveB' },
                 saveButtonTitle),

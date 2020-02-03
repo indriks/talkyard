@@ -1072,6 +1072,14 @@ function pagesFor(browser) {
           else {
             // DO_AFTER 2019-07-01, no, Webdriverio v5: see if this Chrome weirdness workaround is still needed.
             browser.setValue(selector, '\uE003'.repeat(oldValue.length) + value);
+            // Try this:  — but causes this error:
+            //  """Error: The requested resource could not be found,
+            //   or a request was received using an HTTP method that is
+            //   not supported by the mapped resource."""
+            //browser.setValue(selector, 'x'); // focus?
+            //browser.keys(['\ue009', 'a']);   // CTRL-A   — but need to release CTRL too?
+            //browser.setValue(selector, value);  // paste-overwrite
+            // see: https://github.com/webdriverio/webdriverio/issues/3024#issuecomment-580302637
           }
 
           if (!opts.checkAndRetry) {

@@ -100,6 +100,7 @@ var t_ru_RU: TalkyardTranslations = t = {
   SavedDot: "Сохраненный.",
   Search: "Поиск",
   SendMsg: "Отправить сообщение",
+  ShowPreview: "Show preview",  // MISSING
   SignUp: "Войти",
   Solution: "Решение",
   started: "началось",
@@ -574,6 +575,10 @@ var t_ru_RU: TalkyardTranslations = t = {
     YourEdits: "Your edits: ",   // MISSING
     YourProgrNoteC: "Your progress note:",  // MISSING
     aProgrNote: "a progress note: ",  // MISSING
+
+    ReplyingToC: "Replying to:",    // MISSING
+    ScrollToPrevw_1: "Scroll to ",  // MISSING
+    ScrollToPrevw_2: "preview",     // MISSING
 
     UnfinEdits: "Unfinished edits",  // MISSING
     ResumeEdting: "Resume editing",  // MISSING
